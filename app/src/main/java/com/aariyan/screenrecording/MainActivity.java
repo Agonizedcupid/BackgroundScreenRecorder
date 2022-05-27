@@ -11,6 +11,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
@@ -27,6 +28,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.aariyan.screenrecording.Constant.Constant;
+import com.aariyan.screenrecording.Service.RecorderService;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
@@ -35,57 +37,60 @@ import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ToggleButton recordBtn;
+    public static ToggleButton recordBtn;
 
     private MediaProjectionManager mediaProjectionManager;
-    private MediaProjection mediaProjection;
-    private VirtualDisplay virtualDisplay;
-    private MediaProjectionCallback mediaProjectionCallback;
-    private MediaRecorder mediaRecorder;
-
-    private String videoUri;
-
-    private int screenDensity;
-    private static final int DISPLAY_WIDTH = 720;
-    private static final int DISPLAY_HEIGHT = 1280;
-
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-
-    static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
-    }
+//    private MediaProjection mediaProjection;
+//    private VirtualDisplay virtualDisplay;
+//    private MediaProjectionCallback mediaProjectionCallback;
+//    private MediaRecorder mediaRecorder;
+//
+//    private String videoUri;
+//
+//    private int screenDensity;
+//    private static final int DISPLAY_WIDTH = 720;
+//    private static final int DISPLAY_HEIGHT = 1280;
+//
+//    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+//
+//    static {
+//        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+//        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+//        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+//        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+//    }
 
 
     private ConstraintLayout snackBarLayout;
+
+    public static int RESULT_CODE;
+    public static Intent DATA;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //getting Display density:
-        displayMetrics();
-
-        //init Media Recorder:
         initMediaRecorder();
 
         initUI();
     }
 
+    @Override
+    protected void onResume() {
+        if (RecorderService.isServiceRunning) {
+            recordBtn.setChecked(true);
+        } else {
+            recordBtn.setChecked(false);
+        }
+        super.onResume();
+    }
+
     private void initMediaRecorder() {
-        mediaRecorder = new MediaRecorder();
+        //mediaRecorder = new MediaRecorder();
         mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
     }
 
-    private void displayMetrics() {
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        screenDensity = metrics.densityDpi;
-
-    }
 
     private void initUI() {
         snackBarLayout = findViewById(R.id.snackBarLayout);
@@ -125,54 +130,24 @@ public class MainActivity extends AppCompatActivity {
 
     private void toggleScreenShare(View view) {
         if (((ToggleButton) view).isChecked()) {
-            initRecorder();
+            //initRecorder();
             recordScreen();
         } else {
-            mediaRecorder.stop();
-            mediaRecorder.reset();
-            stopScreenRecording();
+            stopMainService();
+//            mediaRecorder.stop();
+//            mediaRecorder.reset();
+//            stopScreenRecording();
         }
     }
 
     private void recordScreen() {
-        if (mediaProjection == null) {
+        if (!RecorderService.isServiceRunning) {
             startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), Constant.REQUEST_CODE);
             return;
         }
-
-        virtualDisplay = createVirtualDisplay();
-        mediaRecorder.start();
-    }
-
-    private VirtualDisplay createVirtualDisplay() {
-        return mediaProjection.createVirtualDisplay("MainActivity", DISPLAY_WIDTH, DISPLAY_HEIGHT, screenDensity,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, mediaRecorder.getSurface(), null, null);
-    }
-
-    private void initRecorder() {
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-
-        videoUri = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
-                + new StringBuilder("/AARIYAN_").append(System.currentTimeMillis()).append(".mp4").toString();
-
-        mediaRecorder.setOutputFile(videoUri);
-        mediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
-        //mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
-        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-        mediaRecorder.setVideoEncodingBitRate(512 * 1000);
-        mediaRecorder.setVideoFrameRate(30);
-
-        int rotation = getWindowManager().getDefaultDisplay().getRotation();
-        int orientation = ORIENTATIONS.get(rotation + 90);
-        mediaRecorder.setOrientationHint(orientation);
-        try {
-            mediaRecorder.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//
+//        virtualDisplay = createVirtualDisplay();
+//        mediaRecorder.start();
     }
 
     @Override
@@ -190,49 +165,32 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        mediaProjectionCallback = new MediaProjectionCallback();
-        mediaProjection =  mediaProjectionManager.getMediaProjection(resultCode, data);
-        mediaProjection.registerCallback(mediaProjectionCallback, null);
-        virtualDisplay = createVirtualDisplay();
-        mediaRecorder.start();
+        startMainService(resultCode, data);
     }
 
-    private class MediaProjectionCallback extends MediaProjection.Callback {
-        @Override
-        public void onStop() {
-            if (recordBtn.isChecked()) {
-                recordBtn.setChecked(false);
-                mediaRecorder.stop();
-                mediaRecorder.reset();
-            }
-            mediaProjection = null;
-            stopScreenRecording();
-            super.onStop();
-        }
-    }
 
-    private void stopScreenRecording() {
-        if (virtualDisplay == null)
-            return;
 
-        virtualDisplay.release();
-        destroyMediaProjection();
-    }
-
-    private void destroyMediaProjection() {
-        if (mediaProjection != null) {
-            mediaProjection.unregisterCallback(mediaProjectionCallback);
-            mediaProjection.stop();
-            mediaProjection = null;
-        }
-    }
+//    private void stopScreenRecording() {
+//        if (virtualDisplay == null)
+//            return;
+//
+//        virtualDisplay.release();
+//        destroyMediaProjection();
+//    }
+//
+//    private void destroyMediaProjection() {
+//        if (mediaProjection != null) {
+//            mediaProjection.unregisterCallback(mediaProjectionCallback);
+//            mediaProjection.stop();
+//            mediaProjection = null;
+//        }
+//    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
-            case Constant.REQUEST_PERMISSION:
-            {
+            case Constant.REQUEST_PERMISSION: {
                 if ((grantResults.length > 0) && grantResults[0] + grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                     toggleScreenShare(recordBtn);
                 } else {
@@ -251,6 +209,27 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return;
             }
+        }
+    }
+
+    //Here stopping the service if it's running already:
+    private void stopMainService() {
+        //Checking whether the service is already running or not:
+        if (RecorderService.isServiceRunning) {
+            stopService(new Intent(MainActivity.this, RecorderService.class));
+        }
+    }
+
+    //Starting the main Service to track:
+    public void startMainService(int resultCode, Intent data) {
+        RESULT_CODE = resultCode;
+        DATA = data;
+        //Log.d(TAG, "startService called");
+        if (!RecorderService.isServiceRunning) {
+            //Intent serviceIntent = new Intent(MainActivity.this, RecorderService.class);
+            Intent serviceIntent = RecorderService.newIntent(MainActivity.this, resultCode, data);
+            ContextCompat.startForegroundService(MainActivity.this,serviceIntent);
+            //startService(serviceIntent);
         }
     }
 }
