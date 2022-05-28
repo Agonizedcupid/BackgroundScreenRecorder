@@ -133,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
             //initRecorder();
             recordScreen();
         } else {
+            Toast.makeText(this, "Stopping Service ....", Toast.LENGTH_SHORT).show();
             stopMainService();
 //            mediaRecorder.stop();
 //            mediaRecorder.reset();

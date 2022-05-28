@@ -160,41 +160,6 @@ public class RecorderService extends Service {
 
         mediaProjectionCallback = new MediaProjectionCallback();
         MediaProjectionManager mProjectionManager = (MediaProjectionManager) getApplicationContext().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-//        mediaRecorder = new MediaRecorder();
-//
-//        DisplayMetrics metrics = new DisplayMetrics();
-//        WindowManager wm = (WindowManager) getApplicationContext().getSystemService(WINDOW_SERVICE);
-//        wm.getDefaultDisplay().getRealMetrics(metrics);
-//
-//        int mScreenDensity = metrics.densityDpi;
-//        int displayWidth = metrics.widthPixels;
-//        int displayHeight = metrics.heightPixels;
-//
-//        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-//        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-//        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-//        mediaRecorder.setVideoEncodingBitRate(8 * 1000 * 1000);
-//        mediaRecorder.setVideoFrameRate(15);
-//        mediaRecorder.setVideoSize(displayWidth, displayHeight);
-//
-//        String videoDir = Environment.getExternalStoragePublicDirectory(DIRECTORY_MOVIES).getAbsolutePath();
-//        Long timestamp = System.currentTimeMillis();
-//
-//        String orientation = "portrait";
-//        if( displayWidth > displayHeight ) {
-//            orientation = "landscape";
-//        }
-//        String filePathAndName = videoDir + "/time_" + timestamp.toString() + "_mode_" + orientation + ".mp4";
-//
-//        mediaRecorder.setOutputFile( filePathAndName );
-//
-//        try {
-//            mediaRecorder.prepare();
-//        } catch (IllegalStateException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
 
         mediaProjection = mProjectionManager.getMediaProjection(resultCode, datas);
 
@@ -217,6 +182,8 @@ public class RecorderService extends Service {
     public void onDestroy() {
         isServiceRunning = false;
         stopForeground(true);
+        stopScreenRecording();
+        Toast.makeText(this, "Service Destroyed!", Toast.LENGTH_SHORT).show();
         super.onDestroy();
     }
 
@@ -274,6 +241,7 @@ public class RecorderService extends Service {
             e.printStackTrace();
         }
     }
+
 
     private class MediaProjectionCallback extends MediaProjection.Callback {
         @Override
