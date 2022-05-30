@@ -23,7 +23,7 @@
             android:foregroundServiceType="mediaProjection" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".SR"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

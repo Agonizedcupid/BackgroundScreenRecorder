@@ -11,18 +11,8 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ServiceInfo;
-import android.hardware.display.DisplayManager;
-import android.hardware.display.VirtualDisplay;
-import android.media.MediaRecorder;
-import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.util.DisplayMetrics;
-import android.util.SparseIntArray;
-import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -31,11 +21,7 @@ import com.aariyan.screenrecording.Constant.Constant;
 import com.aariyan.screenrecording.Service.RecorderService;
 import com.google.android.material.snackbar.Snackbar;
 
-import java.io.IOException;
-import java.net.URI;
-import java.text.SimpleDateFormat;
-
-public class MainActivity extends AppCompatActivity {
+public class SR extends AppCompatActivity {
 
     public static ToggleButton recordBtn;
 
@@ -69,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_sr);
 
         initMediaRecorder();
 
@@ -99,24 +85,24 @@ public class MainActivity extends AppCompatActivity {
         recordBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        + ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO)
+                if (ContextCompat.checkSelfPermission(SR.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        + ContextCompat.checkSelfPermission(SR.this, Manifest.permission.RECORD_AUDIO)
                         != PackageManager.PERMISSION_GRANTED) {
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            || ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.RECORD_AUDIO)) {
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(SR.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            || ActivityCompat.shouldShowRequestPermissionRationale(SR.this, Manifest.permission.RECORD_AUDIO)) {
                         recordBtn.setChecked(false);
                         Snackbar.make(snackBarLayout, "Permissions", Snackbar.LENGTH_INDEFINITE)
                                 .setAction("ENABLE", new View.OnClickListener() {
                                     @Override
                                     public void onClick(View view) {
-                                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                                        ActivityCompat.requestPermissions(SR.this, new String[]{
                                                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                                 Manifest.permission.RECORD_AUDIO
                                         }, Constant.REQUEST_PERMISSION);
                                     }
                                 }).show();
                     } else {
-                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                        ActivityCompat.requestPermissions(SR.this, new String[]{
                                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                 Manifest.permission.RECORD_AUDIO
                         }, Constant.REQUEST_PERMISSION);
@@ -200,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
                             .setAction("ENABLE", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                                    ActivityCompat.requestPermissions(SR.this, new String[]{
                                             Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                             Manifest.permission.RECORD_AUDIO
                                     }, Constant.REQUEST_PERMISSION);
@@ -216,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
     private void stopMainService() {
         //Checking whether the service is already running or not:
         if (RecorderService.isServiceRunning) {
-            stopService(new Intent(MainActivity.this, RecorderService.class));
+            stopService(new Intent(SR.this, RecorderService.class));
         }
     }
 
@@ -227,8 +213,8 @@ public class MainActivity extends AppCompatActivity {
         //Log.d(TAG, "startService called");
         if (!RecorderService.isServiceRunning) {
             //Intent serviceIntent = new Intent(MainActivity.this, RecorderService.class);
-            Intent serviceIntent = RecorderService.newIntent(MainActivity.this, resultCode, data);
-            ContextCompat.startForegroundService(MainActivity.this,serviceIntent);
+            Intent serviceIntent = RecorderService.newIntent(SR.this, resultCode, data);
+            ContextCompat.startForegroundService(SR.this,serviceIntent);
             //startService(serviceIntent);
         }
     }

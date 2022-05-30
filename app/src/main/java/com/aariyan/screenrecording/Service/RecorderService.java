@@ -1,8 +1,6 @@
 package com.aariyan.screenrecording.Service;
 
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
-import static android.os.Environment.DIRECTORY_MOVIES;
-import static com.aariyan.screenrecording.MainActivity.recordBtn;
+import static com.aariyan.screenrecording.SR.recordBtn;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -19,7 +17,6 @@ import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -30,7 +27,7 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
-import com.aariyan.screenrecording.MainActivity;
+import com.aariyan.screenrecording.SR;
 import com.aariyan.screenrecording.R;
 
 import java.io.IOException;
@@ -93,7 +90,7 @@ public class RecorderService extends Service {
 
     private void createNotification() {
         //This intent will be used as pending intent; means when user will click on notification tab it will open this activity:
-        Intent notificationIntent = new Intent(this, MainActivity.class);
+        Intent notificationIntent = new Intent(this, SR.class);
         //Attaching the pending intent:
         //PendingIntent.FLAG_IMMUTABLE is used for >= android 11:
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
@@ -217,6 +214,7 @@ public class RecorderService extends Service {
     public void onDestroy() {
         isServiceRunning = false;
         stopForeground(true);
+        stopScreenRecording();
         super.onDestroy();
     }
 
